@@ -1,0 +1,185 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Post-Call Insight Engine — SAM Template
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 60
+    MemorySize: 256
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref CallInsightsTable
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+
+Parameters:
+  AnthropicApiKey:
+    Type: String
+    NoEcho: true
+    Description: Anthropic API key for Claude
+
+  TranscriptBucketName:
+    Type: String
+    Description: Name of the S3 bucket where Amazon Connect drops transcripts
+
+Resources:
+
+  # ─────────────────────────────────────────────
+  # DynamoDB Table
+  # ─────────────────────────────────────────────
+  CallInsightsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CallInsights
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: callId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+        - AttributeName: agentId
+          AttributeType: S
+        - AttributeName: date
+          AttributeType: S
+        - AttributeName: sentimentScore
+          AttributeType: N
+      KeySchema:
+        - AttributeName: callId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: agentId
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: GSI2
+          KeySchema:
+            - AttributeName: date
+              KeyType: HASH
+            - AttributeName: sentimentScore
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # ─────────────────────────────────────────────
+  # S3 Transcript Bucket
+  # ─────────────────────────────────────────────
+  TranscriptBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref TranscriptBucketName
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Status: Enabled
+            ExpirationInDays: 365
+
+  # ─────────────────────────────────────────────
+  # Process Transcript Lambda
+  # ─────────────────────────────────────────────
+  ProcessTranscriptFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: post-call-process-transcript
+      CodeUri: ../lambda/process-transcript/
+      Handler: index.handler
+      Description: Triggered by S3; calls Claude API; writes to DynamoDB
+      Environment:
+        Variables:
+          ANTHROPIC_API_KEY: !Ref AnthropicApiKey
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref TranscriptBucketName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CallInsightsTable
+      Events:
+        S3Trigger:
+          Type: S3
+          Properties:
+            Bucket: !Ref TranscriptBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: .txt
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt ProcessTranscriptDLQ.Arn
+
+  ProcessTranscriptDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: process-transcript-dlq
+      MessageRetentionPeriod: 1209600  # 14 days
+
+  # ─────────────────────────────────────────────
+  # API Handler Lambda
+  # ─────────────────────────────────────────────
+  ApiHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: post-call-api-handler
+      CodeUri: ../lambda/api-handler/
+      Handler: index.handler
+      Description: Handles API Gateway requests → DynamoDB queries
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref CallInsightsTable
+      Events:
+        GetCalls:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CallInsightsApi
+            Path: /calls
+            Method: GET
+        GetCallDetail:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CallInsightsApi
+            Path: /calls/{id}
+            Method: GET
+        GetAnalytics:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CallInsightsApi
+            Path: /analytics
+            Method: GET
+
+  # ─────────────────────────────────────────────
+  # API Gateway
+  # ─────────────────────────────────────────────
+  CallInsightsApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: post-call-insights-api
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${CallInsightsApi}.execute-api.${AWS::Region}.amazonaws.com/prod'
+    Export:
+      Name: PostCallInsightsApiUrl
+
+  DynamoDBTableName:
+    Description: DynamoDB table name
+    Value: !Ref CallInsightsTable
+    Export:
+      Name: PostCallInsightsDynamoTable
+
+  ProcessTranscriptFunctionArn:
+    Description: Process transcript Lambda ARN
+    Value: !GetAtt ProcessTranscriptFunction.Arn
