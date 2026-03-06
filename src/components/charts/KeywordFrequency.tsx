@@ -3,6 +3,7 @@
 import {
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -28,11 +29,11 @@ export function KeywordFrequency({ data }: Props) {
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
             <XAxis
               dataKey="keyword"
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 10, fill: "#94a3b8" }}
               tickLine={false}
               axisLine={false}
             />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--popover))",
@@ -41,7 +42,12 @@ export function KeywordFrequency({ data }: Props) {
                 fontSize: 12,
               }}
             />
-            <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+              {data.map((_, i) => {
+                const colors = ["#6366f1","#3b82f6","#10b981","#f59e0b","#f43f5e","#8b5cf6","#06b6d4","#84cc16","#f97316","#ec4899"];
+                return <Cell key={i} fill={colors[i % colors.length]} fillOpacity={0.85} />;
+              })}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

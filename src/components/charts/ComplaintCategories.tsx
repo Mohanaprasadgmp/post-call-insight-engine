@@ -15,13 +15,7 @@ interface Props {
   data: CategoryBreakdown[];
 }
 
-const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(220, 70%, 60%)",
-  "hsl(160, 60%, 50%)",
-  "hsl(30, 80%, 55%)",
-  "hsl(290, 60%, 60%)",
-];
+const COLORS = ["#6366f1", "#3b82f6", "#10b981", "#f59e0b", "#f43f5e"];
 
 export function ComplaintCategories({ data }: Props) {
   return (
@@ -57,7 +51,7 @@ export function ComplaintCategories({ data }: Props) {
             <Legend
               iconSize={10}
               iconType="circle"
-              wrapperStyle={{ fontSize: 11 }}
+              wrapperStyle={{ fontSize: 11, color: "#94a3b8" }}
             />
           </PieChart>
         </ResponsiveContainer>

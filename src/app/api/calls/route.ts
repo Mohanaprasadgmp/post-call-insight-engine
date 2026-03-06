@@ -2,7 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { MOCK_CALLS } from "@/lib/mockData";
 import type { Sentiment } from "@/lib/types";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export async function GET(req: NextRequest) {
+  // Proxy to real API Gateway when configured
+  if (API_URL) {
+    const upstream = new URL(`${API_URL}/calls`);
+    req.nextUrl.searchParams.forEach((v, k) => upstream.searchParams.set(k, v));
+    const res = await fetch(upstream.toString());
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  }
+
+  // Mock data fallback
   const { searchParams } = req.nextUrl;
   const agentId = searchParams.get("agentId") ?? undefined;
   const from = searchParams.get("from") ?? undefined;

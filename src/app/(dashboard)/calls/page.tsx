@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Header } from "@/components/layout/Header";
+
 import { FilterBar, type FilterState } from "@/components/filters/FilterBar";
 import { CallAccordion } from "@/components/calls/CallAccordion";
 import { useCalls } from "@/hooks/useCalls";
@@ -25,7 +25,7 @@ export default function CallsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Calls Feed" />
+
       <main className="flex-1 p-6 space-y-4">
         <FilterBar
           filters={filters}

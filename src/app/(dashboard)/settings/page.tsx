@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Header } from "@/components/layout/Header";
+
 import { DateRangePicker } from "@/components/filters/DateRangePicker";
 import { AgentSelect } from "@/components/filters/AgentSelect";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Settings" />
+
       <main className="flex-1 p-6 space-y-6 max-w-2xl">
 
         {/* Export */}

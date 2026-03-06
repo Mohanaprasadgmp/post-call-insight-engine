@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useCallDetail } from "@/hooks/useCalls";
-import { Header } from "@/components/layout/Header";
+
 import { SummaryBullets } from "@/components/calls/SummaryBullets";
 import { AudioPlayer } from "@/components/calls/AudioPlayer";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ export default function CallDetailPage() {
   if (loading) {
     return (
       <div className="flex flex-col flex-1">
-        <Header title="Call Detail" />
+
         <main className="flex-1 p-6 space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-32 w-full rounded-lg" />
@@ -38,7 +38,7 @@ export default function CallDetailPage() {
   if (error || !call) {
     return (
       <div className="flex flex-col flex-1">
-        <Header title="Call Detail" />
+
         <main className="flex-1 p-6">
           <p className="text-destructive text-sm">Call not found.</p>
           <Button variant="link" onClick={() => router.back()} className="mt-2 pl-0 text-xs">
@@ -51,7 +51,7 @@ export default function CallDetailPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Call Detail" />
+
       <main className="flex-1 p-6 space-y-4 max-w-4xl">
         <Button
           variant="ghost"

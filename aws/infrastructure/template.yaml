@@ -101,7 +101,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref CallInsightsTable
       Events:
-        S3Trigger:
+        S3TriggerTxt:
           Type: S3
           Properties:
             Bucket: !Ref TranscriptBucket
@@ -111,6 +111,16 @@ Resources:
                 Rules:
                   - Name: suffix
                     Value: .txt
+        S3TriggerJson:
+          Type: S3
+          Properties:
+            Bucket: !Ref TranscriptBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: _analysis.json
       DeadLetterQueue:
         Type: SQS
         TargetArn: !GetAtt ProcessTranscriptDLQ.Arn

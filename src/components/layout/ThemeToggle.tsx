@@ -1,26 +1,38 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
-import { Moon, Sun } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
-  if (!mounted) return <Button variant="ghost" size="icon" className="w-9 h-9" />;
+  if (!mounted) return <div className="w-14 h-7 rounded-full bg-muted" />;
+
+  const isDark = theme === "dark";
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="w-9 h-9"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    <button
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={cn(
+        "relative inline-flex h-7 w-14 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none",
+        isDark ? "bg-primary" : "bg-muted"
+      )}
+      aria-label="Toggle theme"
     >
-      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+      {/* Icons */}
+      <Sun className="absolute left-1.5 h-3.5 w-3.5 text-amber-400" />
+      <Moon className="absolute right-1.5 h-3.5 w-3.5 text-slate-300" />
+      {/* Thumb */}
+      <span
+        className={cn(
+          "absolute h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200",
+          isDark ? "translate-x-7" : "translate-x-1"
+        )}
+      />
+    </button>
   );
 }

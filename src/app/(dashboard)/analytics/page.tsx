@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Header } from "@/components/layout/Header";
+
 import { FilterBar, type FilterState } from "@/components/filters/FilterBar";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { SentimentTimeline } from "@/components/charts/SentimentTimeline";
@@ -23,7 +23,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Analytics" />
+
       <main className="flex-1 p-6 space-y-4">
         <FilterBar filters={filters} onChange={setFilters} />
         {loading ? (
